@@ -212,18 +212,18 @@ function stageShot(kind) {
     game.player.hand = [
       { uid: 9001, defId: 'ember-burst', def: { id: 'ember-burst', name: 'Ember Burst', suit: 'ember', type: 'spell', cost: 2, art: 'flame', text: 'Deal 4 damage to any target.' } },
       { uid: 9002, defId: 'thornweave', def: { id: 'thornweave', name: 'Thornweave', suit: 'thorn', type: 'spell', cost: 2, art: 'leaf', text: 'Give a friendly creature +2/+2.' } },
-      { uid: 9003, defId: 'gale-sprite', def: { id: 'gale-sprite', name: 'Gale Sprite', suit: 'gale', type: 'creature', cost: 1, atk: 2, hp: 1, art: 'swirl', text: 'Swift: draw a card when played.' } },
+      { uid: 9003, defId: 'gale-sprite', def: { id: 'gale-sprite', name: 'Gale Sprite', suit: 'gale', type: 'creature', cost: 1, atk: 2, hp: 1, art: 'swirl', text: 'Swift: draw a card.' } },
       { uid: 9004, defId: 'tide-blessing', def: { id: 'tide-blessing', name: 'Tide Blessing', suit: 'tide', type: 'spell', cost: 2, art: 'drop', text: 'Restore 6 life to your hero.' } },
-      { uid: 9005, defId: 'briar-wolf', def: { id: 'briar-wolf', name: 'Briar Wolf', suit: 'thorn', type: 'creature', cost: 3, atk: 4, hp: 3, art: 'leaf', text: 'Leech: restore 2 life when it destroys a creature.' } },
-      { uid: 9006, defId: 'storm-roc', def: { id: 'storm-roc', name: 'Storm Roc', suit: 'gale', type: 'creature', cost: 5, atk: 5, hp: 5, art: 'swirl', text: 'Swift: draw a card when played.' } },
+      { uid: 9005, defId: 'briar-wolf', def: { id: 'briar-wolf', name: 'Briar Wolf', suit: 'thorn', type: 'creature', cost: 3, atk: 4, hp: 3, art: 'leaf', text: 'Leech: heal 2 on a kill.' } },
+      { uid: 9006, defId: 'storm-roc', def: { id: 'storm-roc', name: 'Storm Roc', suit: 'gale', type: 'creature', cost: 5, atk: 5, hp: 5, art: 'swirl', text: 'Swift: draw a card.' } },
     ];
     game.player.deck = new Array(14).fill('ember-imp');
     game.ai.deck = new Array(16).fill('cinder-hound');
     game.log = [
-      'Flame Knight strikes the Tide Serpent for 5.',
-      'Thorn Colossus holds the line — the Warden is at 18.',
-      'Turn 7 — You gain 7 ember.',
-      'Tide Serpent enters the Warden’s board.',
+      'Flame Knight hits Tide Serpent for 5.',
+      'Thorn Colossus holds the line.',
+      'Turn 7 — you gain 7 ember.',
+      'Tide Serpent joins the Warden.',
     ];
     game.stats = { turns: 7, cardsPlayed: 11, damageDealt: 12 };
     game.fx.push({ kind: 'float', text: '-5', side: 'ai', color: '#ff6b5e', big: true });
@@ -232,6 +232,8 @@ function stageShot(kind) {
   }
   if (kind === 'win') {
     game.player.life = 11; game.ai.life = 0;
+    game.player.ember = 3; game.player.emberMax = 9;
+    game.ai.ember = 2; game.ai.emberMax = 9;
     game.stats = { turns: 9, cardsPlayed: 15, damageDealt: 30 };
     game.screen = 'win'; game.phase = 'over'; game.winner = 'player';
     game.log = ['Ember Burst finishes the Warden for 4.', 'The Cinder Warden falls. You win the Court!'];
@@ -239,6 +241,8 @@ function stageShot(kind) {
   }
   if (kind === 'loss') {
     game.player.life = 0; game.ai.life = 14;
+    game.player.ember = 1; game.player.emberMax = 8;
+    game.ai.ember = 4; game.ai.emberMax = 8;
     game.stats = { turns: 8, cardsPlayed: 12, damageDealt: 16 };
     game.screen = 'loss'; game.phase = 'over'; game.winner = 'ai';
     game.log = ['Thorn Colossus strikes you for 7.', 'Your ember gutters out. The Warden wins.'];

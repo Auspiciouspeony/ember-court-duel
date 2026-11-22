@@ -1,7 +1,7 @@
 // Ember Court — canvas rendering: the table, the cards, the HUD, the effects and
 // the title / win / loss screens. Everything is drawn in code; no image files.
 // Layout is a fixed 1280x720 table, scaled to the window by main.js.
-import { SUITS } from './cards.js';
+import { SUITS, CARD_BY_ID } from './cards.js';
 import { effAtk } from './state.js';
 
 export const W = 1280, H = 720;
@@ -139,9 +139,9 @@ export function drawCardFace(ctx, def, x, y, w, h, opts) {
   drawGlyph(ctx, suit.glyph, x + w / 2, cy, h * 0.34, suit.color);
   // Rules text
   ctx.fillStyle = '#3a3128';
-  ctx.font = '10.5px Georgia, serif';
+  ctx.font = '10px Georgia, serif';
   ctx.textAlign = 'center';
-  wrapText(ctx, def.text, x + w / 2, y + h * 0.72, w - 12, 12);
+  wrapText(ctx, def.text, x + w / 2, y + h * 0.70, w - 12, 11);
   // Creature stats
   if (def.type === 'creature') {
     const atk = o.atk !== undefined ? o.atk : def.atk;
@@ -264,7 +264,7 @@ function drawHero(ctx, side, x, y, isPlayer, game) {
   ctx.font = '12px Georgia, serif';
   ctx.fillStyle = '#cfe8d8';
   ctx.fillText(isPlayer ? 'You · Ember Sovereign' : 'Opponent · AI', x + 60, y + 34);
-  drawLifeBar(ctx, x + 60, y + 44, 300, side.life, side.maxLife, !isPlayer);
+  drawLifeBar(ctx, x + 60, y + 40, 300, side.life, side.maxLife, !isPlayer);
   drawEmberPips(ctx, x + 380, y + 20, side.ember, side.emberMax);
   ctx.font = '12px Georgia, serif';
   ctx.fillStyle = '#cfe8d8';
@@ -369,24 +369,29 @@ function drawBoard(ctx, game, ui, time) {
   ctx.fillText(game.log[1] || '', 44, 338);
 
   const turnLabel = game.phase === 'player' ? 'YOUR TURN' : (game.phase === 'ai' ? "WARDEN'S TURN" : 'GAME OVER');
-  ctx.fillStyle = game.phase === 'player' ? '#ffd97a' : '#cfe8d8';
-  ctx.font = 'bold 15px Georgia, serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(turnLabel, 830, 308);
-  ctx.font = '12px Georgia, serif';
-  ctx.fillStyle = '#cfe8d8';
-  ctx.fillText(`Turn ${game.turn}`, 830, 330);
+  if (game.screen === 'play') {
+    ctx.fillStyle = game.phase === 'player' ? '#ffd97a' : '#cfe8d8';
+    ctx.font = 'bold 15px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(turnLabel, 917, 308);
+    ctx.font = '12px Georgia, serif';
+    ctx.fillStyle = '#cfe8d8';
+    ctx.fillText(`Turn ${game.turn}`, 917, 330);
+  }
 
   // End Turn button
   const et = { x: 700, y: 296, w: 130, h: 52 };
   layout.endTurn = et;
-  const canEnd = game.phase === 'player';
-  ctx.fillStyle = canEnd ? (ui && ui.hoverEndTurn ? '#e8b64c' : '#d9a441') : '#5a5a5a';
-  roundRect(ctx, et.x, et.y, et.w, et.h, 8); ctx.fill();
-  ctx.lineWidth = 2; ctx.strokeStyle = '#fff3d0'; ctx.stroke();
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 15px Georgia, serif';
-  ctx.fillText('END TURN', et.x + et.w / 2, et.y + et.h / 2 + 1);
+  if (game.screen === 'play') {
+    const canEnd = game.phase === 'player';
+    ctx.fillStyle = canEnd ? (ui && ui.hoverEndTurn ? '#e8b64c' : '#d9a441') : '#5a5a5a';
+    roundRect(ctx, et.x, et.y, et.w, et.h, 8); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff3d0'; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 15px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('END TURN', et.x + et.w / 2, et.y + et.h / 2 + 1);
+  }
 
   // --- player board ---
   const pSlots = boardSlots(game, player, 360);
@@ -418,21 +423,21 @@ function drawBoard(ctx, game, ui, time) {
   if (player.board.length === 0) ctx.fillText('Your board is empty — play a creature.', 480, 430);
   if (ai.board.length === 0) ctx.fillText('The Warden has no creatures — strike the face!', 480, 220);
 
-  // --- player hero row ---
-  layout.playerHero = drawHero(ctx, player, 30, 500, true, game);
+  // --- player hero row (life bar kept clear of the raised hand cards) ---
+  layout.playerHero = drawHero(ctx, player, 30, 492, true, game);
 
-  // --- player hand ---
+  // --- player hand (kept clear of the hero's life bar above it) ---
   layout.hand = [];
   const hand = player.hand;
-  const cw = 118, ch = 162;
-  const overlap = hand.length > 1 ? Math.min(96, (900 - cw) / (hand.length - 1)) : 0;
+  const cw = 118, ch = 150;
+  const overlap = hand.length > 1 ? Math.min(78, (900 - cw) / (hand.length - 1)) : 0;
   const totalW = cw + overlap * (hand.length - 1);
   const startX = 30 + (900 - totalW) / 2;
   hand.forEach((card, i) => {
     const hover = ui && ui.hoverCard === card;
     const selected = ui && ui.selectedCard === card;
     const tx = startX + i * overlap + cw / 2;
-    const ty = 636 - (hover || selected ? 26 : 0);
+    const ty = 648 - (hover || selected ? 18 : 0);
     const p = cardPos(card);
     p.x = lerp(p.x, tx, 0.22); p.y = lerp(p.y, ty, 0.22);
     drawCardFace(ctx, card.def, p.x - cw / 2, p.y - ch / 2, cw, ch, {
@@ -467,12 +472,11 @@ function drawSidePanel(ctx, game, ui) {
   ctx.font = 'bold 14px Georgia, serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillText('COURT LOG', x + 14, 36);
-  ctx.font = '12px Georgia, serif';
+  ctx.font = '11.5px Georgia, serif';
   ctx.fillStyle = '#e8f5ec';
-  game.log.slice(0, 5).forEach((line, i) => {
+  game.log.slice(0, 4).forEach((line, i) => {
     ctx.globalAlpha = 1 - i * 0.16;
-    wrapText(ctx, '• ' + line, x + 14, 62 + i * 30, w - 28, 13);
-    ctx.fillText('', x + 14, 62 + i * 30);
+    wrapText(ctx, '• ' + line, x + 14, 62 + i * 38, w - 28, 13);
   });
   ctx.globalAlpha = 1;
   // Suit legend
@@ -599,12 +603,11 @@ function spawnConfetti() {
 }
 
 function drawTitle(ctx, game, time) {
-  // Fanned sample cards behind the title.
-  const suits = ['ember', 'tide', 'thorn', 'gale'];
-  suits.forEach((s, i) => {
-    const def = { id: 'sample', name: SUITS[s].name, suit: s, type: 'creature', cost: 2 + i, atk: 2 + i, hp: 2 + i, art: SUITS[s].glyph, text: 'A courtier of the ' + SUITS[s].name + ' suit.' };
+  // Fanned sample cards behind the title — the real 1-cost courtiers.
+  const samples = [CARD_BY_ID['ember-imp'], CARD_BY_ID['tide-acolyte'], CARD_BY_ID['thorn-sprout'], CARD_BY_ID['gale-sprite']];
+  samples.forEach((def, i) => {
     ctx.save();
-    ctx.translate(400 + i * 170, 520);
+    ctx.translate(400 + i * 170, 556);
     ctx.rotate((i - 1.5) * 0.1);
     drawCardFace(ctx, def, -59, -81, 118, 162, {});
     ctx.restore();
@@ -628,11 +631,11 @@ function drawTitle(ctx, game, time) {
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#ffd97a';
   ctx.font = 'bold 24px Georgia, serif';
-  ctx.fillText('— CLICK TO BEGIN —', 640, 450);
+  ctx.fillText('— CLICK TO BEGIN —', 640, 445);
   ctx.globalAlpha = 1;
   ctx.font = '13px Georgia, serif';
   ctx.fillStyle = '#9fc7ae';
-  ctx.fillText('Mouse + keyboard · Space ends your turn · M mutes · R restarts', 640, 620);
+  ctx.fillText('Mouse + keyboard · Space ends your turn · M mutes · R restarts', 640, 676);
   layout.titleStart = { x: 0, y: 0, w: W, h: H };
   drawParticles(ctx, time);
 }
