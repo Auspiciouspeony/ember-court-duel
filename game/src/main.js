@@ -195,17 +195,20 @@ function stageShot(kind) {
   game = newGame(rng);
   game.screen = 'play';
   if (kind === 'play') {
-    // A rich mid-game: turn 7, both boards full of creatures, big hands,
-    // life totals that tell the story, one card raised as if just drawn.
+    // A rich late-game table: turn 7, both boards four creatures deep, a
+    // full seven-card hand, life totals that tell the story, one card raised
+    // as if just drawn. The Flame Knight shows Steam live: a Tide ally is
+    // up, so its attack gem is gold at 6 with a STEAM label.
     game.turn = 7;
     game.player.life = 24; game.ai.life = 18;
     game.player.ember = 7; game.player.emberMax = 7;
     game.ai.ember = 6; game.ai.emberMax = 6;
-    game.player.board = [makeCreature('flame-knight'), makeCreature('reef-turtle'), makeCreature('wind-falcon')];
+    game.player.board = [makeCreature('flame-knight'), makeCreature('reef-turtle'), makeCreature('wind-falcon'), makeCreature('briar-wolf')];
     game.player.board[0].canAttack = true; game.player.board[0].justPlayed = false;
     game.player.board[1].canAttack = true; game.player.board[1].justPlayed = false;
     game.player.board[2].canAttack = false;
-    game.ai.board = [makeCreature('thorn-colossus'), makeCreature('cinder-hound'), makeCreature('tide-serpent')];
+    game.player.board[3].canAttack = true; game.player.board[3].justPlayed = false;
+    game.ai.board = [makeCreature('thorn-colossus'), makeCreature('cinder-hound'), makeCreature('tide-serpent'), makeCreature('ember-imp')];
     game.ai.board.forEach((c) => { c.canAttack = true; c.justPlayed = false; });
     game.player.board[1].hp = 4; // battle-worn
     game.ai.board[0].hp = 5;
@@ -216,16 +219,17 @@ function stageShot(kind) {
       { uid: 9004, defId: 'tide-blessing', def: { id: 'tide-blessing', name: 'Tide Blessing', suit: 'tide', type: 'spell', cost: 2, art: 'drop', text: 'Restore 6 life to your hero.' } },
       { uid: 9005, defId: 'briar-wolf', def: { id: 'briar-wolf', name: 'Briar Wolf', suit: 'thorn', type: 'creature', cost: 3, atk: 4, hp: 3, art: 'leaf', text: 'Leech: heal 2 on a kill.' } },
       { uid: 9006, defId: 'storm-roc', def: { id: 'storm-roc', name: 'Storm Roc', suit: 'gale', type: 'creature', cost: 5, atk: 5, hp: 5, art: 'swirl', text: 'Swift: draw a card.' } },
+      { uid: 9007, defId: 'tide-acolyte', def: { id: 'tide-acolyte', name: 'Tide Acolyte', suit: 'tide', type: 'creature', cost: 1, atk: 1, hp: 3, art: 'drop', text: 'Mend: heal 2 when played.' } },
     ];
     game.player.deck = new Array(14).fill('ember-imp');
     game.ai.deck = new Array(16).fill('cinder-hound');
     game.log = [
-      'Flame Knight hits Tide Serpent for 5.',
+      'Flame Knight strikes for 6 — Steam!',
       'Thorn Colossus holds the line.',
       'Turn 7 — you gain 7 ember.',
       'Tide Serpent joins the Warden.',
     ];
-    game.stats = { turns: 7, cardsPlayed: 11, damageDealt: 12 };
+    game.stats = { turns: 7, cardsPlayed: 13, damageDealt: 12 };
     game.fx.push({ kind: 'float', text: '-5', side: 'ai', color: '#ff6b5e', big: true });
     ui.selectedCard = game.player.hand[0];
     return;
@@ -236,6 +240,8 @@ function stageShot(kind) {
     game.ai.ember = 2; game.ai.emberMax = 9;
     game.stats = { turns: 9, cardsPlayed: 15, damageDealt: 30 };
     game.screen = 'win'; game.phase = 'over'; game.winner = 'player';
+    // Boards stay empty: the end panel covers the middle of the table, so
+    // creatures staged there would only peek out around its edges.
     game.log = ['Ember Burst finishes the Warden for 4.', 'The Cinder Warden falls. You win the Court!'];
     return;
   }
@@ -245,6 +251,8 @@ function stageShot(kind) {
     game.ai.ember = 4; game.ai.emberMax = 8;
     game.stats = { turns: 8, cardsPlayed: 12, damageDealt: 16 };
     game.screen = 'loss'; game.phase = 'over'; game.winner = 'ai';
+    // Boards stay empty: the end panel covers the middle of the table, so
+    // creatures staged there would only peek out around its edges.
     game.log = ['Thorn Colossus strikes you for 7.', 'Your ember gutters out. The Warden wins.'];
   }
 }

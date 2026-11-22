@@ -129,31 +129,57 @@ export function drawCardFace(ctx, def, x, y, w, h, opts) {
   ctx.font = 'bold 12px Georgia, serif';
   ctx.textAlign = 'left';
   ctx.fillText(def.name, x + 33, y + 17, w - 38);
-  // Art: big suit glyph on a tinted medallion
+  // Art: a suit glyph on a glowing medallion — a large ghost glyph, turned a
+  // little per card so each portrait differs, behind the crisp white glyph.
   const cy = y + h * 0.48;
+  const med = ctx.createRadialGradient(x + w / 2, cy - h * 0.05, 2, x + w / 2, cy, h * 0.22);
+  med.addColorStop(0, suit.light);
+  med.addColorStop(1, suit.color);
   ctx.beginPath();
   ctx.arc(x + w / 2, cy, h * 0.2, 0, Math.PI * 2);
-  ctx.fillStyle = suit.light + '55';
+  ctx.fillStyle = med;
   ctx.fill();
-  ctx.lineWidth = 2; ctx.strokeStyle = suit.color; ctx.stroke();
-  drawGlyph(ctx, suit.glyph, x + w / 2, cy, h * 0.34, suit.color);
+  ctx.lineWidth = 2; ctx.strokeStyle = suit.dark; ctx.stroke();
+  ctx.save();
+  ctx.translate(x + w / 2, cy);
+  ctx.rotate(((def.id.length % 5) - 2) * 0.14);
+  ctx.globalAlpha = 0.28;
+  drawGlyph(ctx, suit.glyph, 0, 0, h * 0.44, suit.dark);
+  ctx.restore();
+  ctx.globalAlpha = 1;
+  drawGlyph(ctx, suit.glyph, x + w / 2, cy, h * 0.3, '#ffffff');
+  ctx.beginPath();
+  ctx.arc(x + w / 2, cy, h * 0.2, 0, Math.PI * 2);
+  ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,217,122,0.9)'; ctx.stroke();
   // Rules text
   ctx.fillStyle = '#3a3128';
   ctx.font = '10px Georgia, serif';
   ctx.textAlign = 'center';
   wrapText(ctx, def.text, x + w / 2, y + h * 0.70, w - 12, 11);
-  // Creature stats
+  // Creature stats — a Steam-boosted attack gem turns gold and is labelled,
+  // so the combo reads on the card instead of hiding in the rules text.
   if (def.type === 'creature') {
     const atk = o.atk !== undefined ? o.atk : def.atk;
     const hp = o.hp !== undefined ? o.hp : def.hp;
+    const boosted = o.atk !== undefined && o.atk > def.atk;
     ctx.font = 'bold 18px Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.beginPath(); ctx.arc(x + 18, y + h - 18, 14, 0, Math.PI * 2);
-    ctx.fillStyle = '#c0392b'; ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.fillText('⚔' + atk, x + 18, y + h - 17);
+    ctx.fillStyle = boosted ? '#f5b83d' : '#c0392b'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = boosted ? '#8a6410' : '#fff'; ctx.stroke();
+    ctx.fillStyle = boosted ? '#3a2a00' : '#fff';
+    ctx.fillText('⚔' + atk, x + 18, y + h - 17);
+    if (boosted) {
+      ctx.font = 'bold 9px Georgia, serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#8a6410';
+      ctx.fillText('STEAM', x + 36, y + h - 17);
+    }
     ctx.beginPath(); ctx.arc(x + w - 18, y + h - 18, 14, 0, Math.PI * 2);
     ctx.fillStyle = '#27ae60'; ctx.fill();
-    ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 18px Georgia, serif';
     ctx.fillText('♥' + hp, x + w - 18, y + h - 17);
   } else {
     ctx.font = 'bold 10px Georgia, serif';
@@ -280,8 +306,8 @@ function pumpFx(game) {
       if (fx.creature) {
         const p = cardPos(fx.creature);
         x = p.x; y = p.y - 20;
-      } else if (fx.side === 'player') { x = 300; y = 520; }
-      else { x = 300; y = 60; }
+      } else if (fx.side === 'player') { x = 880; y = 440; }
+      else { x = 880; y = 200; }
       floaters.push({ text: fx.text, x, y, color: fx.color, big: !!fx.big, life: 1 });
     } else if (fx.kind === 'shake') {
       shake = Math.max(shake, fx.power);
@@ -420,8 +446,12 @@ function drawBoard(ctx, game, ui, time) {
   ctx.fillStyle = '#cfe8d8';
   ctx.font = '12px Georgia, serif';
   ctx.textAlign = 'center';
-  if (player.board.length === 0) ctx.fillText('Your board is empty — play a creature.', 480, 430);
-  if (ai.board.length === 0) ctx.fillText('The Warden has no creatures — strike the face!', 480, 220);
+  // Empty-board hints only during play: on the win/loss screens the dimmed
+  // table shows through the end panel, and the hints would ghost beside it.
+  if (game.screen === 'play') {
+    if (player.board.length === 0) ctx.fillText('Your board is empty — play a creature.', 480, 430);
+    if (ai.board.length === 0) ctx.fillText('The Warden has no creatures — strike the face!', 480, 220);
+  }
 
   // --- player hero row (life bar kept clear of the raised hand cards) ---
   layout.playerHero = drawHero(ctx, player, 30, 492, true, game);
@@ -430,7 +460,9 @@ function drawBoard(ctx, game, ui, time) {
   layout.hand = [];
   const hand = player.hand;
   const cw = 118, ch = 150;
-  const overlap = hand.length > 1 ? Math.min(78, (900 - cw) / (hand.length - 1)) : 0;
+  // Cards sit nearly side by side (112 px of each 118 px card shows), so
+  // every name and cost reads at a glance instead of hiding under its neighbour.
+  const overlap = hand.length > 1 ? Math.min(112, (900 - cw) / (hand.length - 1)) : 0;
   const totalW = cw + overlap * (hand.length - 1);
   const startX = 30 + (900 - totalW) / 2;
   hand.forEach((card, i) => {
@@ -614,6 +646,16 @@ function drawTitle(ctx, game, time) {
   });
   ctx.fillStyle = 'rgba(10,20,14,0.55)';
   ctx.fillRect(0, 0, W, H);
+  // The four suits above the title, so the suits read at a glance.
+  ['ember', 'tide', 'thorn', 'gale'].forEach((k, i) => {
+    const su = SUITS[k];
+    const gx = 490 + i * 100;
+    drawGlyph(ctx, su.glyph, gx, 108, 40, su.color);
+    ctx.fillStyle = '#cfe8d8';
+    ctx.font = 'bold 12px Georgia, serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(su.name, gx, 138);
+  });
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffd97a';
   ctx.font = 'bold 92px Georgia, serif';
