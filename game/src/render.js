@@ -290,7 +290,16 @@ function drawHero(ctx, side, x, y, isPlayer, game) {
   ctx.font = '12px Georgia, serif';
   ctx.fillStyle = '#cfe8d8';
   ctx.fillText(isPlayer ? 'You · Ember Sovereign' : 'Opponent · AI', x + 60, y + 34);
-  drawLifeBar(ctx, x + 60, y + 40, 300, side.life, side.maxLife, !isPlayer);
+  // Both heroes get the big life bar: at thumbnail size the duel's state
+  // must read from the life totals alone. A hero at 10 life or less also
+  // gets a LOW LIFE tag under the bar, so the danger is unmistakable.
+  drawLifeBar(ctx, x + 60, y + 40, 300, side.life, side.maxLife, true);
+  if (side.life <= 10) {
+    ctx.fillStyle = '#ff8a7a';
+    ctx.font = 'bold 11px Georgia, serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('⚠ LOW LIFE', x + 60, y + 73);
+  }
   drawEmberPips(ctx, x + 380, y + 20, side.ember, side.emberMax);
   ctx.font = '12px Georgia, serif';
   ctx.fillStyle = '#cfe8d8';
@@ -669,6 +678,13 @@ function drawTitle(ctx, game, time) {
   ctx.fillStyle = '#cfe8d8';
   ctx.fillText('Four suits, one table. Play creatures, cast spells,', 640, 350);
   ctx.fillText('combine Steam, Mend, Leech and Swift — and take the Warden to 0 life.', 640, 376);
+  // A stats strip, so the scale of the game reads before a single click:
+  // sixteen cards, four suits, thirty life a side, one rival.
+  ctx.strokeStyle = '#d9a441'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(430, 390); ctx.lineTo(850, 390); ctx.stroke();
+  ctx.font = 'bold 15px Georgia, serif';
+  ctx.fillStyle = '#ffd97a';
+  ctx.fillText('16 unique cards  ·  4 suits  ·  30 life  ·  1 rival', 640, 408);
   const pulse = 0.75 + Math.sin(time / 350) * 0.25;
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#ffd97a';

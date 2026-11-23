@@ -195,23 +195,28 @@ function stageShot(kind) {
   game = newGame(rng);
   game.screen = 'play';
   if (kind === 'play') {
-    // A rich late-game table: turn 7, both boards four creatures deep, a
-    // full seven-card hand, life totals that tell the story, one card raised
-    // as if just drawn. The Flame Knight shows Steam live: a Tide ally is
-    // up, so its attack gem is gold at 6 with a STEAM label.
-    game.turn = 7;
-    game.player.life = 24; game.ai.life = 18;
-    game.player.ember = 7; game.player.emberMax = 7;
-    game.ai.ember = 6; game.ai.emberMax = 6;
-    game.player.board = [makeCreature('flame-knight'), makeCreature('reef-turtle'), makeCreature('wind-falcon'), makeCreature('briar-wolf')];
+    // A full late-game table: turn 8, BOTH boards five creatures deep (the
+    // board maximum), both heroes in lethal range — 13 vs 9 — so the shot
+    // reads as the duel's decisive moment, not a quiet mid-game. The Flame
+    // Knight shows Steam live: a Tide ally is up, so its attack gem is gold
+    // at 6 with a STEAM label. Two damage floaters fly at once: the Knight's
+    // -6 on the Warden, the Colossus's -7 answered back on you.
+    game.turn = 8;
+    game.player.life = 13; game.ai.life = 9;
+    game.player.ember = 8; game.player.emberMax = 8;
+    game.ai.ember = 7; game.ai.emberMax = 7;
+    game.player.board = [makeCreature('flame-knight'), makeCreature('reef-turtle'), makeCreature('wind-falcon'), makeCreature('briar-wolf'), makeCreature('tide-acolyte')];
     game.player.board[0].canAttack = true; game.player.board[0].justPlayed = false;
     game.player.board[1].canAttack = true; game.player.board[1].justPlayed = false;
     game.player.board[2].canAttack = false;
     game.player.board[3].canAttack = true; game.player.board[3].justPlayed = false;
-    game.ai.board = [makeCreature('thorn-colossus'), makeCreature('cinder-hound'), makeCreature('tide-serpent'), makeCreature('ember-imp')];
+    game.player.board[4].canAttack = true; game.player.board[4].justPlayed = false;
+    game.ai.board = [makeCreature('thorn-colossus'), makeCreature('cinder-hound'), makeCreature('tide-serpent'), makeCreature('ember-imp'), makeCreature('storm-roc')];
     game.ai.board.forEach((c) => { c.canAttack = true; c.justPlayed = false; });
-    game.player.board[1].hp = 4; // battle-worn
-    game.ai.board[0].hp = 5;
+    game.player.board[0].hp = 3; // battle-worn Knight, still swinging
+    game.player.board[1].hp = 4; // battle-worn Turtle
+    game.ai.board[0].hp = 5; // Colossus holding at 5
+    game.ai.board[2].hp = 3; // Serpent bloodied
     game.player.hand = [
       { uid: 9001, defId: 'ember-burst', def: { id: 'ember-burst', name: 'Ember Burst', suit: 'ember', type: 'spell', cost: 2, art: 'flame', text: 'Deal 4 damage to any target.' } },
       { uid: 9002, defId: 'thornweave', def: { id: 'thornweave', name: 'Thornweave', suit: 'thorn', type: 'spell', cost: 2, art: 'leaf', text: 'Give a friendly creature +2/+2.' } },
@@ -225,12 +230,13 @@ function stageShot(kind) {
     game.ai.deck = new Array(16).fill('cinder-hound');
     game.log = [
       'Flame Knight strikes for 6 — Steam!',
-      'Thorn Colossus holds the line.',
-      'Turn 7 — you gain 7 ember.',
-      'Tide Serpent joins the Warden.',
+      'Thorn Colossus answers for 7. Your life: 13.',
+      'Turn 8 — lethal is on the table.',
+      'Storm Roc joins the Warden.',
     ];
-    game.stats = { turns: 7, cardsPlayed: 13, damageDealt: 12 };
-    game.fx.push({ kind: 'float', text: '-5', side: 'ai', color: '#ff6b5e', big: true });
+    game.stats = { turns: 8, cardsPlayed: 17, damageDealt: 17 };
+    game.fx.push({ kind: 'float', text: '-6', side: 'ai', color: '#ff6b5e', big: true });
+    game.fx.push({ kind: 'float', text: '-7', side: 'player', color: '#ff6b5e', big: true });
     ui.selectedCard = game.player.hand[0];
     return;
   }
